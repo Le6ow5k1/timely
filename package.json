@@ -1,5 +1,11 @@
 {
   "name"    : "elm-electron-todomvc",
   "version" : "0.1.0",
-  "main"    : "electron-start.js"
+  "main"    : "electron-start.js",
+  "scripts": {
+    "elm": "elm make Timely.elm --output elm.js || true",
+    "elm:watch": "chokidar '**/*.elm' -c 'npm run elm'",
+    "start": "electron .",
+    "watch": "npm run start & npm run elm:watch & wait"
+  }
 }
