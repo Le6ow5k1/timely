@@ -12,9 +12,13 @@
   </body>
 
   <script type="text/javascript">
-   var storedState = localStorage.getItem('elm-todo-save');
+   var storedState = localStorage.getItem('timely');
    var startingState = storedState ? JSON.parse(storedState) : null;
    var todomvc = Elm.Timely.fullscreen();
+
+   todomvc.ports.setStorage.subscribe(function(state) {
+       localStorage.setItem('timely', state);
+   });
   </script>
 
 </html>

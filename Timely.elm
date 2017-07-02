@@ -1,6 +1,6 @@
 port module Timely exposing (..)
 
-import Models exposing(Model, initialModel)
+import Models exposing(Model, initialModel, toJson)
 import Entry exposing(Entry, EntryStatus ( Active, Stopped ))
 import Utils exposing(formatTime)
 
@@ -15,9 +15,23 @@ main =
     Html.program
         { init = init
         , view = view
-        , update = update
+        , update = updateWithStorage
         , subscriptions = subscriptions
         }
+
+
+port setStorage : String -> Cmd msg
+
+
+updateWithStorage : Msg -> Model -> (Model, Cmd Msg)
+updateWithStorage msg model =
+  let
+    (newModel, cmds) =
+      update msg model
+  in
+    ( newModel
+    , Cmd.batch [ setStorage (Models.toJson newModel), cmds ]
+    )
 
 
 init : (Model, Cmd Msg)
@@ -76,19 +90,19 @@ update msg model =
 
         Start entryId ->
             let
-                updatedModel = (Models.updateEntry Entry.startEntry model entryId)
+                updatedModel = (Models.updateEntry Entry.start model entryId)
             in
                 ( updatedModel, Cmd.none )
 
         Stop entryId ->
             let
-                updatedModel = (Models.updateEntry Entry.stopEntry model entryId)
+                updatedModel = (Models.updateEntry Entry.stop model entryId)
             in
                 ( updatedModel, Cmd.none )
 
         Tick newTime ->
             let
-                updatedModel = Models.updateEntries (\id entry -> (Entry.incrementEntryTime entry 1)) model
+                updatedModel = Models.updateEntries (\id entry -> (Entry.incrementTime entry 1)) model
             in
                 ( updatedModel, Cmd.none )
 

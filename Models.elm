@@ -2,12 +2,11 @@ module Models exposing(..)
 
 import Entry as Entry exposing( Entry
                               , EntryStatus ( Active, Stopped )
-                              , defaultEntry
-                              , incrementEntryTime
-                              , startEntry
-                              , stopEntry)
+                              )
 
 import Dict exposing (Dict)
+import Json.Encode
+import Json.Decode
 
 
 type alias Model =
@@ -17,9 +16,19 @@ type alias Model =
 
 
 initialModel =
-    { newEntry = Entry.defaultEntry
+    { newEntry = Entry.default
     , entries = Dict.fromList []
     }
+
+
+toJson model =
+    let
+        entries = model.entries |> Dict.values |> (List.map Entry.toJsonValue)
+        modelObject = Json.Encode.object [ ("newEntry", (model.newEntry |> Entry.toJsonValue))
+                                         , ("entries", (Json.Encode.list entries))
+                                         ]
+    in
+        Json.Encode.encode 0 modelObject
 
 
 addNewEntryIfPossible model =
