@@ -62,13 +62,19 @@ update msg model =
                 updatedNewEntry = { newEntry | title = newTitle }
                 updatedModel = { model | newEntry = updatedNewEntry }
             in
-                ( updatedModel , Cmd.none )
+                ( updatedModel, Cmd.none )
 
         AddEntry ->
             let
-                updatedModel = Models.addNewEntryIfPossible model
+                startCurrentEntryStopOthers = \currentId id entry ->
+                                              if id == currentId then
+                                                  Entry.start entry
+                                              else
+                                                  Entry.stop entry
+                modelWithAddedEntry = Models.addNewEntryIfPossible model
+                updatedModel = Models.updateEntries (startCurrentEntryStopOthers model.newEntry.id) modelWithAddedEntry
             in
-                ( updatedModel , Cmd.none )
+                ( updatedModel, Cmd.none )
 
         RemoveEntry entryId ->
             let
@@ -80,7 +86,7 @@ update msg model =
             let
                 updatedModel = (Models.updateEntry (\e -> { e | isEditing = not e.isEditing }) model entryId)
             in
-                ( updatedModel , Cmd.none )
+                ( updatedModel, Cmd.none )
 
         ChangeEntryTitle entryId newTitle ->
             let
@@ -90,7 +96,12 @@ update msg model =
 
         Start entryId ->
             let
-                updatedModel = (Models.updateEntry Entry.start model entryId)
+                startCurrentEntryStopOthers = \id entry ->
+                                              if id == entryId then
+                                                  Entry.start entry
+                                              else
+                                                  Entry.stop entry
+                updatedModel = Models.updateEntries startCurrentEntryStopOthers model
             in
                 ( updatedModel, Cmd.none )
 
@@ -177,7 +188,7 @@ newEntryView newEntry =
                       ]
                     []
               ]
-        , button [ type_ "submit", class "btn btn-primary", onClick AddEntry ]
+        , button [ type_ "submit", class "btn btn-primary pull-right", onClick AddEntry ]
             [ text "Add" ]
         ]
 
@@ -199,6 +210,6 @@ view model =
         [ div [ class "row" ]
               [ (newEntryView model.newEntry) ]
         , ul [ class "row list-group" ]
-            (List.map entryView (Dict.values model.entries))
+            (model.entries |> Dict.values |> (List.map entryView))
         , (totalTimeView model)
         ]
