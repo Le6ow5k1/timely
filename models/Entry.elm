@@ -1,5 +1,7 @@
 module Entry exposing ( Entry
                       , EntryStatus ( Active, Stopped )
+                      , Id
+                      , Position
                       , default
                       , incrementTime
                       , start
@@ -15,18 +17,19 @@ import Json.Decode
 type EntryStatus =
     Active | Stopped
 
+type alias Id = Int
+
+type alias Position = Int
+
 
 type alias Entry =
-    { id : Int
+    { id : Id
     , title : String
     , time : Time
     , status : EntryStatus
     , isEditing : Bool
+    , position : Position
     }
-
-
-type EntryType =
-    Int | String | Time | EntryStatus | Bool
 
 
 toJsonValue : Entry -> Json.Encode.Value
@@ -40,7 +43,7 @@ toJsonValue { id, title, time, status, isEditing } =
 
 
 default =
-    Entry 0 "" 0 Stopped False
+    Entry 0 "" 0 Stopped False 1
 
 
 incrementTime : Entry -> Float -> Entry

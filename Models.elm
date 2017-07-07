@@ -15,12 +15,14 @@ type alias Model =
     }
 
 
+initialModel : Model
 initialModel =
     { newEntry = Entry.default
     , entries = Dict.fromList []
     }
 
 
+toJson : Model -> String
 toJson model =
     let
         entries = model.entries |> Dict.values |> (List.map Entry.toJsonValue)
@@ -31,26 +33,40 @@ toJson model =
         Json.Encode.encode 0 modelObject
 
 
-addNewEntryIfPossible model =
+addNewEntry : Model -> Model
+addNewEntry model =
     let
         newEntry = model.newEntry
     in
-        if String.isEmpty newEntry.title then
-            model
-        else
-            let
-                updatedEntries = Dict.insert newEntry.id newEntry model.entries
-                updatedNewEntry = { newEntry |
-                                        id = (Dict.size model.entries) + 1,
-                                        title = "" }
-            in
-                { model |
-                      entries = updatedEntries,
-                      newEntry = updatedNewEntry
-                }
+        let
+            updatedEntries = Dict.insert newEntry.id newEntry model.entries
+            updatedNewEntry = { newEntry |
+                                    id = newEntry.id + 1,
+                                    position = newEntry.position + 1,
+                                    title = "" }
+        in
+            { model |
+                  entries = updatedEntries,
+                  newEntry = updatedNewEntry
+            }
 
 
-updateEntry : (Entry -> Entry) -> Model -> Int -> Model
+moveEntry : Model -> Entry.Id -> Entry.Position -> Model
+moveEntry model entryId newPosition =
+    let
+        moveEntry = \currentId id entry ->
+                    if id == currentId then
+                        { entry | position = newPosition }
+                    else
+                        if entry.position >= newPosition then
+                            { entry | position = entry.position + 1 }
+                        else
+                            entry
+    in
+        updateEntries (moveEntry entryId) model
+
+
+updateEntry : (Entry -> Entry) -> Model -> Entry.Id -> Model
 updateEntry updateFn model entryId =
     let
         updatedEntries = Dict.update entryId (updateEntryHelper updateFn) model.entries

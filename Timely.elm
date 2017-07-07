@@ -1,6 +1,6 @@
 port module Timely exposing (..)
 
-import Models exposing(Model, initialModel, toJson)
+import Models exposing(Model, initialModel, toJson, moveEntry)
 import Entry exposing(Entry, EntryStatus ( Active, Stopped ))
 import Utils exposing(formatTime)
 
@@ -45,11 +45,12 @@ init =
 type Msg =
     ChangeNewEntry String
         | AddEntry
-        | RemoveEntry Int
-        | ToggleIsEditing Int
-        | ChangeEntryTitle Int String
-        | Start Int
-        | Stop Int
+        | RemoveEntry Entry.Id
+        | MoveEntry Entry.Id Entry.Position
+        | ToggleIsEditing Entry.Id
+        | ChangeEntryTitle Entry.Id String
+        | Start Entry.Id
+        | Stop Entry.Id
         | Tick Time
 
 
@@ -65,39 +66,45 @@ update msg model =
                 ( updatedModel, Cmd.none )
 
         AddEntry ->
-            let
-                startCurrentEntryStopOthers = \currentId id entry ->
-                                              if id == currentId then
-                                                  Entry.start entry
-                                              else
-                                                  Entry.stop entry
-                modelWithAddedEntry = Models.addNewEntryIfPossible model
-                updatedModel = Models.updateEntries (startCurrentEntryStopOthers model.newEntry.id) modelWithAddedEntry
-            in
-                ( updatedModel, Cmd.none )
+            if String.isEmpty model.newEntry.title then
+                ( model, Cmd.none )
+            else
+                let
+                    startCurrentEntryStopOthers = \currentId id entry ->
+                                                  if id == currentId then
+                                                      Entry.start entry
+                                                  else
+                                                      Entry.stop entry
+                    modelWithAddedEntry = Models.addNewEntry model
+                    updatedModel = Models.updateEntries (startCurrentEntryStopOthers model.newEntry.id) modelWithAddedEntry
+                in
+                    ( updatedModel, Cmd.none )
 
-        RemoveEntry entryId ->
+        RemoveEntry id ->
             let
-                updatedEntries = Dict.remove entryId model.entries
+                updatedEntries = Dict.remove id model.entries
             in
                 ( { model | entries = updatedEntries } , Cmd.none )
 
-        ToggleIsEditing entryId ->
+        MoveEntry id newPosition ->
+            ( Models.moveEntry model id newPosition , Cmd.none )
+
+        ToggleIsEditing id ->
             let
-                updatedModel = (Models.updateEntry (\e -> { e | isEditing = not e.isEditing }) model entryId)
+                updatedModel = (Models.updateEntry (\e -> { e | isEditing = not e.isEditing }) model id)
             in
                 ( updatedModel, Cmd.none )
 
-        ChangeEntryTitle entryId newTitle ->
+        ChangeEntryTitle id newTitle ->
             let
-                updatedModel = (Models.updateEntry (\e -> { e | title = newTitle }) model entryId)
+                updatedModel = (Models.updateEntry (\e -> { e | title = newTitle }) model id)
             in
                 ( updatedModel, Cmd.none )
 
-        Start entryId ->
+        Start id ->
             let
-                startCurrentEntryStopOthers = \id entry ->
-                                              if id == entryId then
+                startCurrentEntryStopOthers = \currentId entry ->
+                                              if currentId == id then
                                                   Entry.start entry
                                               else
                                                   Entry.stop entry
@@ -105,9 +112,9 @@ update msg model =
             in
                 ( updatedModel, Cmd.none )
 
-        Stop entryId ->
+        Stop id ->
             let
-                updatedModel = (Models.updateEntry Entry.stop model entryId)
+                updatedModel = (Models.updateEntry Entry.stop model id)
             in
                 ( updatedModel, Cmd.none )
 
@@ -210,6 +217,6 @@ view model =
         [ div [ class "row" ]
               [ (newEntryView model.newEntry) ]
         , ul [ class "row list-group" ]
-            (model.entries |> Dict.values |> (List.map entryView))
+            (model.entries |> Dict.values |> (List.sortBy (\e -> -e.id)) |> (List.map entryView))
         , (totalTimeView model)
         ]
