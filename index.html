@@ -1,24 +1,32 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <script type="text/javascript" src="./elm.js"></script>
-    <script>window.Elm = require('./elm.js');</script>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-  </head>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="css/style.css">
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <link rel="stylesheet" href="node_modules/dragula/dist/dragula.min.css">
+    </head>
 
-  <body>
-  </body>
+    <body>
+        <script type="text/javascript" src="node_modules/dragula/dist/dragula.min.js"></script>
+        <script type="text/javascript" src="./elm.js"></script>
+        <script>window.Elm = require('./elm.js');</script>
+    </body>
 
-  <script type="text/javascript">
-   var storedState = localStorage.getItem('timely');
-   var startingState = storedState ? JSON.parse(storedState) : null;
-   var todomvc = Elm.Timely.fullscreen();
+    <script type="text/javascript">
+     var storedState = localStorage.getItem('timely');
+     var startingState = storedState ? JSON.parse(storedState) : null;
+     var timely = Elm.Timely.fullscreen();
 
-   todomvc.ports.setStorage.subscribe(function(state) {
-       localStorage.setItem('timely', state);
-   });
-  </script>
+     timely.ports.setStorage.subscribe(function(state) {
+         localStorage.setItem('timely', state);
+     });
+
+     dragula([document.getElementById("entries-list")], {
+         moves: function (el, container, handle) {
+             return handle.classList.contains("moving-handle");
+         }
+     });
+    </script>
 
 </html>
